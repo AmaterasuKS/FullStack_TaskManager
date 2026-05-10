@@ -1,9 +1,20 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import Base, engine
+from app.models import TaskDB  # noqa: F401 — регистрация модели в metadata
 from app.routers import tasks
 
-app = FastAPI(title="Task Manager API")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
+app = FastAPI(title="Task Manager API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
