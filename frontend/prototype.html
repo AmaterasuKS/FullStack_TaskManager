@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Manager — Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --text: #ffffff;
+      --text-muted: #a1a1aa;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-muted: rgba(99, 102, 241, 0.2);
+      --border: #27272a;
+      --danger: #f87171;
+      --danger-hover: #fca5a5;
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.55);
+      --radius: 12px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 1rem 2rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      padding: 1rem 0 1.25rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+
+    .header__title {
+      margin: 0;
+      font-size: clamp(1.35rem, 4vw, 1.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header__title span {
+      color: var(--accent);
+    }
+
+    .header__counter {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--surface);
+      padding: 0.5rem 0.875rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    .header__counter strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Form */
+    .add-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 480px) {
+      .add-form {
+        flex-direction: row;
+        align-items: stretch;
+      }
+    }
+
+    .add-form__input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.75rem 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .add-form__input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .add-form__input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-muted);
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn--primary {
+      padding: 0.75rem 1.25rem;
+      color: #fff;
+      background: var(--accent);
+      box-shadow: var(--shadow);
+    }
+
+    .btn--primary:hover {
+      background: var(--accent-hover);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .btn--icon {
+      padding: 0.4rem 0.55rem;
+      font-size: 1rem;
+      line-height: 1;
+      color: var(--danger);
+      background: transparent;
+      border: 1px solid var(--border);
+    }
+
+    .btn--icon:hover {
+      color: var(--danger-hover);
+      border-color: var(--danger);
+      background: rgba(248, 113, 113, 0.08);
+    }
+
+    /* Board */
+    .board {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 768px) {
+      .board {
+        grid-template-columns: repeat(3, 1fr);
+        align-items: start;
+      }
+    }
+
+    .column {
+      background: rgba(26, 26, 26, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      min-height: 120px;
+    }
+
+    .column__title {
+      margin: 0 0 1rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    .column__list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .column--todo .column__title {
+      color: #a78bfa;
+    }
+
+    .column--progress .column__title {
+      color: #fbbf24;
+    }
+
+    .column--done .column__title {
+      color: #34d399;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .card__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .card__name {
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .card__date {
+      margin: 0 0 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .card__footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card__select {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.45rem 0.6rem;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .card__select:hover,
+    .card__select:focus {
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="header__title"><span>Task</span> Manager</h1>
+      <p class="header__counter">Всего задач: <strong id="task-count">0</strong></p>
+    </header>
+
+    <form class="add-form" id="add-form" autocomplete="off">
+      <input
+        type="text"
+        class="add-form__input"
+        id="task-input"
+        placeholder="Название задачи…"
+        maxlength="200"
+        aria-label="Название задачи"
+      />
+      <button type="submit" class="btn btn--primary">Добавить</button>
+    </form>
+
+    <div class="board">
+      <section class="column column--todo" aria-labelledby="col-todo">
+        <h2 class="column__title" id="col-todo">To Do</h2>
+        <div class="column__list" id="list-todo" data-status="todo"></div>
+      </section>
+      <section class="column column--progress" aria-labelledby="col-progress">
+        <h2 class="column__title" id="col-progress">In Progress</h2>
+        <div class="column__list" id="list-progress" data-status="in_progress"></div>
+      </section>
+      <section class="column column--done" aria-labelledby="col-done">
+        <h2 class="column__title" id="col-done">Done</h2>
+        <div class="column__list" id="list-done" data-status="done"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STATUS = {
+        TODO: "todo",
+        IN_PROGRESS: "in_progress",
+        DONE: "done",
+      };
+
+      const STATUS_LABEL = {
+        [STATUS.TODO]: "To Do",
+        [STATUS.IN_PROGRESS]: "In Progress",
+        [STATUS.DONE]: "Done",
+      };
+
+      let nextId = 1;
+      let tasks = [];
+
+      const els = {
+        form: document.getElementById("add-form"),
+        input: document.getElementById("task-input"),
+        count: document.getElementById("task-count"),
+        lists: {
+          [STATUS.TODO]: document.getElementById("list-todo"),
+          [STATUS.IN_PROGRESS]: document.getElementById("list-progress"),
+          [STATUS.DONE]: document.getElementById("list-done"),
+        },
+      };
+
+      function formatDate(iso) {
+        const d = new Date(iso);
+        return d.toLocaleString("ru-RU", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function updateCounter() {
+        els.count.textContent = String(tasks.length);
+      }
+
+      function createCard(task) {
+        const card = document.createElement("article");
+        card.className = "card";
+        card.dataset.id = String(task.id);
+
+        const top = document.createElement("div");
+        top.className = "card__top";
+
+        const name = document.createElement("h3");
+        name.className = "card__name";
+        name.textContent = task.title;
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn btn--icon";
+        delBtn.setAttribute("aria-label", "Удалить задачу");
+        delBtn.textContent = "×";
+        delBtn.addEventListener("click", function () {
+          removeTask(task.id);
+        });
+
+        top.appendChild(name);
+        top.appendChild(delBtn);
+
+        const dateEl = document.createElement("p");
+        dateEl.className = "card__date";
+        dateEl.textContent = "Создано: " + formatDate(task.createdAt);
+
+        const footer = document.createElement("div");
+        footer.className = "card__footer";
+
+        const select = document.createElement("select");
+        select.className = "card__select";
+        select.setAttribute("aria-label", "Статус задачи");
+
+        [STATUS.TODO, STATUS.IN_PROGRESS, STATUS.DONE].forEach(function (s) {
+          const opt = document.createElement("option");
+          opt.value = s;
+          opt.textContent = STATUS_LABEL[s];
+          if (s === task.status) opt.selected = true;
+          select.appendChild(opt);
+        });
+
+        select.addEventListener("change", function () {
+          setStatus(task.id, select.value);
+        });
+
+        footer.appendChild(select);
+
+        card.appendChild(top);
+        card.appendChild(dateEl);
+        card.appendChild(footer);
+
+        return card;
+      }
+
+      function render() {
+        Object.keys(els.lists).forEach(function (key) {
+          els.lists[key].innerHTML = "";
+        });
+
+        tasks.forEach(function (task) {
+          const list = els.lists[task.status];
+          if (list) list.appendChild(createCard(task));
+        });
+
+        updateCounter();
+      }
+
+      function addTask(title) {
+        const trimmed = title.trim();
+        if (!trimmed) return;
+
+        tasks.push({
+          id: nextId++,
+          title: trimmed,
+          status: STATUS.TODO,
+          createdAt: new Date().toISOString(),
+        });
+        render();
+      }
+
+      function removeTask(id) {
+        tasks = tasks.filter(function (t) {
+          return t.id !== id;
+        });
+        render();
+      }
+
+      function setStatus(id, newStatus) {
+        const task = tasks.find(function (t) {
+          return t.id === id;
+        });
+        if (!task || task.status === newStatus) return;
+        task.status = newStatus;
+        render();
+      }
+
+      els.form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        addTask(els.input.value);
+        els.input.value = "";
+        els.input.focus();
+      });
+
+      function seedDemo() {
+        const now = Date.now();
+        tasks = [
+          {
+            id: nextId++,
+            title: "Спроектировать API задач",
+            status: STATUS.TODO,
+            createdAt: new Date(now - 86400000 * 2).toISOString(),
+          },
+          {
+            id: nextId++,
+            title: "Сверстать прототип досок",
+            status: STATUS.IN_PROGRESS,
+            createdAt: new Date(now - 86400000).toISOString(),
+          },
+          {
+            id: nextId++,
+            title: "Подключить FastAPI к фронту",
+            status: STATUS.DONE,
+            createdAt: new Date(now - 3600000).toISOString(),
+          },
+        ];
+        render();
+      }
+
+      seedDemo();
+    })();
+  </script>
+</body>
+</html>
