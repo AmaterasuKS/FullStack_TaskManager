@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
 
-export default function Header({ taskCount }) {
+export default function Header({ taskCount, username, onLogout }) {
   return (
     <header className="header">
       <h1 className="header__title">
@@ -27,9 +27,25 @@ export default function Header({ taskCount }) {
           Статистика
         </NavLink>
       </nav>
-      <p className="header__counter">
-        Всего задач: <strong>{taskCount}</strong>
-      </p>
+      <div className="header__aside">
+        {username ? (
+          <span className="header__user" title={username}>
+            {username}
+          </span>
+        ) : null}
+        <p className="header__counter">
+          Всего задач: <strong>{taskCount}</strong>
+        </p>
+        {onLogout ? (
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={onLogout}
+          >
+            Выйти
+          </button>
+        ) : null}
+      </div>
     </header>
   )
 }

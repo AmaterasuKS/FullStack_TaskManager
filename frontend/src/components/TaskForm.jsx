@@ -3,10 +3,14 @@ import { useState } from 'react'
 export default function TaskForm({ onAdd }) {
   const [value, setValue] = useState('')
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    onAdd(value)
-    setValue('')
+    try {
+      await onAdd(value)
+      setValue('')
+    } catch {
+      /* ошибка обрабатывается в useTasks */
+    }
   }
 
   return (

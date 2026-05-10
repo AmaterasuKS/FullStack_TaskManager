@@ -4,8 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
-from app.models import TaskDB  # noqa: F401 — регистрация модели в metadata
-from app.routers import tasks
+from app.models import TaskDB, UserDB  # noqa: F401 — регистрация моделей
+from app.routers import auth, tasks
 
 
 @asynccontextmanager
@@ -24,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
 
 

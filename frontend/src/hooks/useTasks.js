@@ -1,58 +1,89 @@
-import { useState, useCallback } from 'react'
-
-function buildInitialTasks() {
-  const now = Date.now()
-  return [
-    {
-      id: 1,
-      title: 'Спроектировать API задач',
-      status: 'todo',
-      createdAt: new Date(now - 86400000 * 2).toISOString(),
-    },
-    {
-      id: 2,
-      title: 'Сверстать прототип досок',
-      status: 'inprogress',
-      createdAt: new Date(now - 86400000).toISOString(),
-    },
-    {
-      id: 3,
-      title: 'Подключить FastAPI к фронту',
-      status: 'done',
-      createdAt: new Date(now - 3600000).toISOString(),
-    },
-  ]
-}
+import { useState, useEffect, useCallback } from 'react'
+import * as tasksApi from '../api/tasks'
 
 export function useTasks() {
-  const [tasks, setTasks] = useState(buildInitialTasks)
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const addTask = useCallback((title) => {
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await tasksApi.getTasks()
+      setTasks(data)
+    } catch (e) {
+      const msg =
+        e?.response?.data?.detail ||
+        e?.message ||
+        'Не удалось загрузить задачи'
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
+      setTasks([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- начальная загрузка с API
+    void load()
+  }, [load])
+
+  const addTask = useCallback(async (title) => {
     const trimmed = title.trim()
     if (!trimmed) return
-    setTasks((prev) => {
-      const nextId = prev.reduce((m, t) => Math.max(m, t.id), 0) + 1
-      return [
-        ...prev,
-        {
-          id: nextId,
-          title: trimmed,
-          status: 'todo',
-          createdAt: new Date().toISOString(),
-        },
-      ]
-    })
+    setError(null)
+    try {
+      const created = await tasksApi.createTask({
+        title: trimmed,
+        status: 'todo',
+      })
+      setTasks((prev) => [...prev, created])
+    } catch (e) {
+      const msg =
+        e?.response?.data?.detail ||
+        e?.message ||
+        'Не удалось создать задачу'
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
+      throw e
+    }
   }, [])
 
-  const deleteTask = useCallback((id) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id))
+  const deleteTask = useCallback(async (id) => {
+    setError(null)
+    try {
+      await tasksApi.deleteTask(id)
+      setTasks((prev) => prev.filter((t) => t.id !== id))
+    } catch (e) {
+      const msg =
+        e?.response?.data?.detail ||
+        e?.message ||
+        'Не удалось удалить задачу'
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
+    }
   }, [])
 
-  const updateStatus = useCallback((id, status) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status } : t)),
-    )
+  const updateStatus = useCallback(async (id, status) => {
+    setError(null)
+    try {
+      const updated = await tasksApi.updateTask(id, { status })
+      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)))
+    } catch (e) {
+      const msg =
+        e?.response?.data?.detail ||
+        e?.message ||
+        'Не удалось обновить статус'
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
+    }
   }, [])
 
-  return { tasks, addTask, deleteTask, updateStatus }
+  return {
+    tasks,
+    loading,
+    error,
+    reload: load,
+    addTask,
+    deleteTask,
+    updateStatus,
+  }
 }

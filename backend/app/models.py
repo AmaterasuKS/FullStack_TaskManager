@@ -22,6 +22,7 @@ class Task(BaseModel):
     title: str
     status: TaskStatus
     created_at: datetime
+    owner_username: str
 
 
 class TaskCreate(BaseModel):
@@ -31,6 +32,23 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     status: TaskStatus
+
+
+class UserDB(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    username: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
 
 
 class TaskDB(Base):
@@ -43,6 +61,7 @@ class TaskDB(Base):
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="todo")
+    owner_username: Mapped[str] = mapped_column(String(128), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
@@ -56,4 +75,5 @@ def task_from_db(row: TaskDB) -> Task:
         title=row.title,
         status=TaskStatus(row.status),
         created_at=row.created_at,
+        owner_username=row.owner_username,
     )
